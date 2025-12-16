@@ -118,6 +118,11 @@ export class ApiService {
   regenerateCameraToken(id: string) {
     return this.http.post<Camera>(`${this.baseUrl}/camera/${id}/regenerate-token`, {});
   }
+
+  // Signal - emit to gate display
+  emitSignal(color: 'red' | 'green' | 'black', vehicleNumber: string, message: string) {
+    return this.http.post(`${this.baseUrl}/gate/signal`, { color, vehicleNumber, message });
+  }
 }
 
 export interface GateLog {

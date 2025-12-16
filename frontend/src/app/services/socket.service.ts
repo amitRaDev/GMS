@@ -1,7 +1,16 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { Subject } from 'rxjs';
 import { EventStorageService } from './event-storage.service';
 import { environment } from '../../environments/environment';
+
+export type SignalColor = 'black' | 'green' | 'red';
+
+export interface SignalEvent {
+  color: SignalColor;
+  vehicleNumber: string;
+  message: string;
+}
 
 export interface EntryRequest {
   vehicleNumber: string;
@@ -63,6 +72,10 @@ export class SocketService {
 
   entryRequest = signal<EntryRequest | null>(null);
   exitRequest = signal<ExitRequest | null>(null);
+
+  // Signal page events
+  private signalEventSubject = new Subject<SignalEvent>();
+  signalEvent$ = this.signalEventSubject.asObservable();
 
   constructor() {
     this.loadStoredEvents();
@@ -150,6 +163,12 @@ export class SocketService {
     this.socket.on('JOB_CLOSED', (data) => {
       this.addEvent({ type: 'JOB_CLOSED', ...data, timestamp: new Date() });
     });
+
+    // Listen for SIGNAL events from WebSocket (for Signal page in other tabs)
+    this.socket.on('SIGNAL', (data) => {
+      console.log('🚦 Signal received:', data);
+      this.signalEventSubject.next(data);
+    });
   }
 
   private async addEvent(event: GateEvent) {
@@ -182,5 +201,10 @@ export class SocketService {
     await this.storage.clearEvents();
     this.events.set([]);
     this.eventCount.set(0);
+  }
+
+  // Emit signal for the Signal page
+  emitSignal(color: SignalColor, vehicleNumber: string, message: string) {
+    this.signalEventSubject.next({ color, vehicleNumber, message });
   }
 }

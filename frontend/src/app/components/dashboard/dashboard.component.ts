@@ -76,11 +76,16 @@ export class DashboardComponent implements OnInit {
     ]);
   }
 
-  allowEntry() {
+  // Accept entry - emit green signal via API (broadcasts to all tabs)
+  acceptEntry() {
     const req = this.socketService.entryRequest();
     if (!req) return;
     
     this.pendingVehicleNumber = req.vehicleNumber;
+    
+    // Emit green signal via API (broadcasts to all connected clients)
+    this.api.emitSignal('green', req.vehicleNumber, 'Entry Accepted').subscribe();
+    
     this.socketService.clearEntryRequest();
     
     if (req.hasJobCard && req.jobCardId) {
@@ -93,7 +98,14 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  denyEntry() { this.socketService.clearEntryRequest(); }
+  // Reject entry - emit red signal via API
+  rejectEntry() { 
+    const req = this.socketService.entryRequest();
+    if (req) {
+      this.api.emitSignal('red', req.vehicleNumber, 'Entry Rejected').subscribe();
+    }
+    this.socketService.clearEntryRequest(); 
+  }
 
   // Update status after entry (when job card exists)
   updateStatusAfterEntry(status: JobStatus) {
@@ -112,16 +124,28 @@ export class DashboardComponent implements OnInit {
     this.pendingVehicleNumber = '';
   }
 
-  allowExit() {
+  // Accept exit - emit green signal via API (broadcasts to all tabs)
+  acceptExit() {
     const req = this.socketService.exitRequest();
     if (!req) return;
+    
+    // Emit green signal via API (broadcasts to all connected clients)
+    this.api.emitSignal('green', req.vehicleNumber, 'Exit Accepted').subscribe();
+    
     this.api.confirmExit(req.vehicleNumber, req.isTestDrive).subscribe(() => {
       this.socketService.clearExitRequest();
       this.loadJobCards();
     });
   }
 
-  denyExit() { this.socketService.clearExitRequest(); }
+  // Reject exit - emit red signal via API
+  rejectExit() { 
+    const req = this.socketService.exitRequest();
+    if (req) {
+      this.api.emitSignal('red', req.vehicleNumber, 'Exit Rejected').subscribe();
+    }
+    this.socketService.clearExitRequest(); 
+  }
 
   createJobAfterEntry() {
     if (!this.pendingVehicleNumber) return;

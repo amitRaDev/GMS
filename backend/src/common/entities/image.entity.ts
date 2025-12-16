@@ -25,6 +25,9 @@ export class Image {
   @Column({ type: 'timestamp', nullable: true })
   capturedAt: Date;
 
+  @Column({ type: 'float', nullable: true })
+  timeTakenToProcessImage: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }

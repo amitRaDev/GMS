@@ -3,8 +3,6 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
-  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
@@ -18,10 +16,11 @@ export enum SocketEvents {
   TEST_DRIVE_RETURN = 'TEST_DRIVE_RETURN',
   JOB_STATUS_CHANGED = 'JOB_STATUS_CHANGED',
   JOB_CLOSED = 'JOB_CLOSED',
+  SIGNAL = 'SIGNAL',
 }
 
 @WebSocketGateway({
-  cors: { origin: ['http://localhost:4200'], credentials: true },
+  cors: { origin: '*', credentials: false },
 })
 export class GarageGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -146,5 +145,15 @@ export class GarageGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }) {
     console.log(`✅ ${SocketEvents.JOB_CLOSED}:`, data.jobNumber);
     this.server.emit(SocketEvents.JOB_CLOSED, data);
+  }
+
+  // Signal for gate display (red/green/black)
+  emitSignal(data: {
+    color: 'red' | 'green' | 'black';
+    vehicleNumber: string;
+    message: string;
+  }) {
+    console.log(`🚦 ${SocketEvents.SIGNAL}:`, data.color, data.vehicleNumber);
+    this.server.emit(SocketEvents.SIGNAL, data);
   }
 }

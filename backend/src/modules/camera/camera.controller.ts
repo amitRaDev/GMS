@@ -6,23 +6,24 @@ import {
   Delete,
   Body,
   Param,
-  Headers,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
   Logger,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CameraService } from './camera.service';
 import { GateService } from '../gate/gate.service';
 import { ImageService } from '../image/image.service';
 import { CreateCameraDto, UpdateCameraDto } from './dto/camera.dto';
-import { CameraEventDto, MovementType } from './dto/camera-event.dto';
+import { CameraEventDto, CameraEventRustDto, MovementType, VehicleSide } from './dto/camera-event.dto';
 import { GateDirection } from '../gate/dto/gate-event.dto';
 import { Camera } from '../../common/entities/camera.entity';
+import { GateLog } from '../../common/entities';
 
 @ApiTags('camera')
 @Controller('camera')
@@ -33,6 +34,8 @@ export class CameraController {
     private readonly cameraService: CameraService,
     private readonly gateService: GateService,
     private readonly imageService: ImageService,
+    @InjectRepository(GateLog)
+    private readonly gateLogRepo: Repository<GateLog>,
   ) {}
 
   @Post('event')
@@ -42,6 +45,15 @@ export class CameraController {
   @ApiResponse({ status: 200, description: 'Event processed successfully' })
   async handleCameraEvent(@Body() dto: CameraEventDto) {
     return this.processEvent(dto);
+  }
+  
+  @Post('event/rust')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Receive ANPR camera event', description: 'Endpoint for ANPR cameras to send vehicle detection events' })
+  @ApiBody({ type: CameraEventDto })
+  @ApiResponse({ status: 200, description: 'Event processed successfully' })
+  async handleCameraEventRust(@Body() dto: CameraEventRustDto) {
+    return this.processEventRust(dto);
   }
 
   @Post('events/bulk')
@@ -90,17 +102,17 @@ export class CameraController {
         cameraId: { type: 'string', example: '1' },
         registrationNumber: { type: 'string', example: 'MH12AB1234' },
         movementType: { type: 'string', enum: ['IN', 'OUT'], example: 'IN' },
-        time: { type: 'string', format: 'date-time', example: '2025-12-16T10:30:00.000Z' },
+        timestamp: { type: 'string', format: 'date-time', example: '2025-12-16T10:30:00.000Z' },
         vehicleType: { type: 'string', example: 'Car' },
         image: { type: 'string', format: 'binary' },
       },
-      required: ['cameraId', 'registrationNumber', 'movementType', 'time'],
+      required: ['cameraId', 'registrationNumber', 'movementType', 'timestamp'],
     },
   })
   @ApiResponse({ status: 200, description: 'Event processed successfully' })
   async handleCameraEventUpload(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { cameraId: string; registrationNumber: string; movementType: string; time: string; vehicleType?: string },
+    @Body() body: { cameraId: string; registrationNumber: string; movementType: string; timestamp: string; vehicleType?: string },
   ) {
     this.logger.log(`Camera Event Upload: ${body.cameraId} - ${body.registrationNumber} - ${body.movementType}`);
 
@@ -117,7 +129,7 @@ export class CameraController {
       cameraId: body.cameraId,
       registrationNumber: body.registrationNumber,
       movementType: body.movementType as MovementType,
-      time: body.time,
+      timestamp: body.timestamp,
       vehicleType: body.vehicleType,
       image: imageBase64,
     };
@@ -136,7 +148,7 @@ export class CameraController {
         vehicleNumber: dto.registrationNumber.toUpperCase().replace(/\s/g, ''),
         cameraId: dto.cameraId,
         eventType: dto.movementType,
-        capturedAt: new Date(dto.time),
+        capturedAt: new Date(dto.timestamp),
       });
       imageId = savedImage.id;
     }
@@ -153,13 +165,65 @@ export class CameraController {
       vehicleType: dto.vehicleType,
       imageId,
       image: dto.image,
-      eventTime: new Date(dto.time),
+      eventTime: new Date(dto.timestamp),
     });
 
     return {
       ...result,
       cameraId: dto.cameraId,
-      timestamp: dto.time,
+      timestamp: dto.timestamp,
+      imageId,
+    };
+  }
+  
+  private async processEventRust(dto: CameraEventRustDto) {
+    this.logger.log(`Camera Event: ${dto.cameraId} - ${dto.registrationNumber} - ${dto.vehicleSide}`);
+
+    // Fetch latest gate_log record for this vehicle
+    const normalizedVehicleNumber = dto.registrationNumber.toUpperCase().replace(/\s/g, '');
+    const latestGateLog = await this.gateLogRepo.findOne({
+      where: { vehicleNumber: normalizedVehicleNumber },
+      order: { createdAt: 'DESC' },
+    });
+
+    if (latestGateLog && latestGateLog?.vehicleNumber) {
+      
+    }
+    
+    this.logger.log(`Latest gate log for ${normalizedVehicleNumber}: ${latestGateLog?.id || 'NONE'} - ${latestGateLog?.eventType || 'N/A'}`);
+
+    // Save image to separate table if provided
+    let imageId: string | undefined;
+    if (dto.image) {
+      const savedImage = await this.imageService.create({
+        data: dto.image,
+        vehicleNumber: dto.registrationNumber.toUpperCase().replace(/\s/g, ''),
+        cameraId: dto.cameraId,
+        eventType: dto.vehicleSide,
+        capturedAt: new Date(dto.timestamp),
+      });
+      imageId = savedImage.id;
+    }
+
+    // Convert to gate event format and process
+    const direction = dto.vehicleSide === VehicleSide.IN ? GateDirection.IN : GateDirection.OUT;
+    
+    const result = await this.gateService.handleGateEvent({
+      vehicleNumber: dto.registrationNumber,
+      direction,
+      isTestDrive: false,
+    }, {
+      cameraId: dto.cameraId,
+      vehicleType: dto.vehicleType,
+      imageId,
+      image: dto.image,
+      eventTime: new Date(dto.timestamp),
+    });
+
+    return {
+      ...result,
+      cameraId: dto.cameraId,
+      timestamp: dto.timestamp,
       imageId,
     };
   }

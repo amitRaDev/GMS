@@ -2,11 +2,15 @@ import { Controller, Post, Body, Param, HttpCode, HttpStatus } from '@nestjs/com
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { GateService, GateResponse } from './gate.service';
 import { GateEventDto } from './dto/gate-event.dto';
+import { GarageGateway } from '../websocket/garage.gateway';
 
 @ApiTags('gate')
 @Controller('gate')
 export class GateController {
-  constructor(private readonly gateService: GateService) {}
+  constructor(
+    private readonly gateService: GateService,
+    private readonly gateway: GarageGateway,
+  ) {}
 
   @Post('event')
   @HttpCode(HttpStatus.OK)
@@ -41,5 +45,15 @@ export class GateController {
   @ApiResponse({ status: 200, description: 'Job closed successfully' })
   async forceCloseJob(@Param('jobCardId') jobCardId: string): Promise<GateResponse> {
     return this.gateService.forceCloseJob(jobCardId);
+  }
+
+  @Post('signal')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Emit signal to gate display', description: 'Send red/green/black signal to gate display' })
+  @ApiBody({ schema: { properties: { color: { type: 'string', enum: ['red', 'green', 'black'] }, vehicleNumber: { type: 'string' }, message: { type: 'string' } } } })
+  @ApiResponse({ status: 200, description: 'Signal emitted' })
+  emitSignal(@Body() body: { color: 'red' | 'green' | 'black'; vehicleNumber: string; message: string }) {
+    this.gateway.emitSignal(body);
+    return { success: true };
   }
 }

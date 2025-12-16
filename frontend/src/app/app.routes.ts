@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
+    path: 'signal',
+    loadComponent: () =>
+      import('./components/signal/signal.component').then((m) => m.SignalComponent),
+  },
+  {
     path: '',
     loadComponent: () =>
       import('./components/layout/layout.component').then((m) => m.LayoutComponent),

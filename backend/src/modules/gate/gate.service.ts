@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, In } from 'typeorm';
-import { Vehicle, JobCard, GateLog, GateEventType, GateDirection as LogDirection } from '../../common/entities';
+import { Repository } from 'typeorm';
+import { Vehicle, JobCard, GateEventType, GateDirection as LogDirection } from '../../common/entities';
 import { JobStatus } from '../../common/enums';
 import { GarageGateway } from '../websocket/garage.gateway';
 import { GateEventDto, GateDirection } from './dto/gate-event.dto';
@@ -99,6 +99,13 @@ export class GateService {
       eventTime: cameraData?.eventTime,
     });
 
+    // Emit red signal when vehicle arrives (waiting for decision)
+    this.gateway.emitSignal({
+      color: 'red',
+      vehicleNumber,
+      message: 'Entry Request - Waiting',
+    });
+
     // Always emit entry request for popup with image
     this.gateway.emitEntryRequest({
       vehicleNumber,
@@ -177,6 +184,13 @@ export class GateService {
       vehicleType: cameraData?.vehicleType,
       imageId: cameraData?.imageId,
       eventTime: cameraData?.eventTime,
+    });
+
+    // Emit red signal when vehicle arrives (waiting for decision)
+    this.gateway.emitSignal({
+      color: 'red',
+      vehicleNumber,
+      message: 'Exit Request - Waiting',
     });
 
     // Always emit exit request for popup with image
@@ -354,29 +368,48 @@ export class GateService {
 
   /**
    * Confirm exit - called when operator approves exit from popup
+   * Operator can always override and allow exit
    */
   async confirmExit(vehicleNumber: string, isTestDrive: boolean = false): Promise<GateResponse> {
     const normalizedNumber = vehicleNumber.toUpperCase().replace(/\s/g, '');
     const vehicle = await this.findVehicleByNumber(normalizedNumber);
     
     if (!vehicle) {
-      return { success: false, action: 'NOT_FOUND', message: 'Vehicle not found.' };
+      // Allow exit even without vehicle record - just log it
+      await this.gateLogService.create({
+        vehicleNumber: normalizedNumber,
+        eventType: GateEventType.EXIT_ALLOWED,
+        direction: LogDirection.OUT,
+        message: `Exit allowed for unknown vehicle ${normalizedNumber} (operator override).`,
+        hasJobCard: false,
+        actionTaken: true,
+      });
+      return { success: true, action: 'EXIT_ALLOWED', message: `Exit allowed for ${normalizedNumber}.` };
     }
 
     const latestJob = await this.findLatestJobCard(vehicle.id);
 
     if (!latestJob) {
-      return { success: false, action: 'NO_JOB', message: 'No job card found.' };
+      // Allow exit without job card - just log it
+      await this.gateLogService.create({
+        vehicleNumber: normalizedNumber,
+        eventType: GateEventType.EXIT_ALLOWED,
+        direction: LogDirection.OUT,
+        message: `Exit allowed for ${normalizedNumber} (no job card).`,
+        hasJobCard: false,
+        actionTaken: true,
+        vehicleId: vehicle.id,
+      });
+      return { success: true, action: 'EXIT_ALLOWED', message: `Exit allowed for ${normalizedNumber}.` };
     }
 
-    // Test drive out
+    // Test drive out - from ONGOING status
     if (latestJob.status === JobStatus.ONGOING && isTestDrive) {
       const previousStatus = latestJob.status;
       latestJob.status = JobStatus.TEST_DRIVE;
       latestJob.testDriveOutTime = new Date();
       await this.jobCardRepo.save(latestJob);
 
-      // Log test drive out
       await this.gateLogService.create({
         vehicleNumber: normalizedNumber,
         eventType: GateEventType.TEST_DRIVE_OUT,
@@ -421,7 +454,6 @@ export class GateService {
       latestJob.vehicleExitTime = new Date();
       await this.jobCardRepo.save(latestJob);
 
-      // Log exit allowed and job closed
       await this.gateLogService.create({
         vehicleNumber: normalizedNumber,
         eventType: GateEventType.EXIT_ALLOWED,
@@ -481,23 +513,46 @@ export class GateService {
       };
     }
 
-    // Log exit denied
+    // Any other status - operator override, close the job and allow exit
+    const previousStatus = latestJob.status;
+    latestJob.status = JobStatus.CLOSED;
+    latestJob.vehicleExitTime = new Date();
+    await this.jobCardRepo.save(latestJob);
+
     await this.gateLogService.create({
       vehicleNumber: normalizedNumber,
-      eventType: GateEventType.EXIT_DENIED,
+      eventType: GateEventType.EXIT_ALLOWED,
       direction: LogDirection.OUT,
       jobNumber: latestJob.jobNumber,
-      message: `Cannot exit. Current status: ${latestJob.status}`,
+      previousStatus,
+      newStatus: JobStatus.CLOSED,
+      message: `Exit allowed for ${normalizedNumber} (operator override from ${previousStatus}).`,
       hasJobCard: true,
-      actionTaken: false,
+      actionTaken: true,
       vehicleId: vehicle.id,
       jobCardId: latestJob.id,
     });
 
+    this.gateway.emitJobClosed({
+      vehicleNumber: normalizedNumber,
+      jobCardId: latestJob.id,
+      jobNumber: latestJob.jobNumber,
+      message: `Vehicle ${normalizedNumber} exited. Job closed (operator override).`,
+    });
+
+    this.gateway.emitJobStatusChanged({
+      jobCardId: latestJob.id,
+      jobNumber: latestJob.jobNumber,
+      vehicleNumber: normalizedNumber,
+      previousStatus,
+      newStatus: JobStatus.CLOSED,
+    });
+
     return {
-      success: false,
-      action: 'CANNOT_EXIT',
-      message: `Cannot exit. Current status: ${latestJob.status}`,
+      success: true,
+      action: 'EXIT_OVERRIDE',
+      message: `Exit allowed for ${normalizedNumber}. Job closed (was ${previousStatus}).`,
+      jobCard: latestJob,
     };
   }
 
