@@ -1,0 +1,143 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Job Cards</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">Manage all service job cards</p>
+    </div>
+    <button (click)="showModal = true" 
+      class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow-sm transition-colors">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      New Job Card
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <div class="flex flex-wrap gap-2">
+      <button (click)="filterStatus = null; applyFilter()"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        [class]="filterStatus === null ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+        All ({{ jobs().length }})
+      </button>
+      @for (status of statuses; track status) {
+        <button (click)="filterStatus = status; applyFilter()"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          [class]="filterStatus === status ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+          <span class="w-2 h-2 rounded-full" [class]="getStatusDot(status)"></span>
+          {{ status.replace('_', ' ') }} ({{ getStatusCount(status) }})
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-700/50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Job #</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Vehicle</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Service</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Entry Time</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        @for (job of filteredJobs(); track job.id; let odd = $odd) {
+          <tr [class]="odd ? 'bg-gray-50 dark:bg-gray-700/30' : 'bg-white dark:bg-gray-800'" class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap font-mono text-sm font-medium text-gray-900 dark:text-white">{{ job.jobNumber }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center mr-3">
+                  <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                  </svg>
+                </div>
+                <span class="font-semibold text-gray-900 dark:text-white">{{ job.vehicle.vehicleNumber }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" [class]="getStatusBadge(job.status)">
+                <span class="w-1.5 h-1.5 rounded-full" [class]="getStatusDot(job.status)"></span>
+                {{ job.status.replace('_', ' ') }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate">{{ job.serviceDescription || '-' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+              {{ job.vehicleEntryTime ? (job.vehicleEntryTime | date:'short') : 'Not entered' }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right">
+              <div class="flex items-center justify-end gap-2">
+                @switch (job.status) {
+                  @case ('IDLE') {
+                    <button (click)="updateStatus(job.id, JobStatus.ONGOING)" class="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors">Start</button>
+                  }
+                  @case ('ONGOING') {
+                    <button (click)="updateStatus(job.id, JobStatus.TEST_DRIVE)" class="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors">Test Drive</button>
+                    <button (click)="updateStatus(job.id, JobStatus.COMPLETED)" class="px-3 py-1.5 bg-purple-500 text-white text-xs font-medium rounded-lg hover:bg-purple-600 transition-colors">Complete</button>
+                  }
+                  @case ('TEST_DRIVE') {
+                    <button (click)="updateStatus(job.id, JobStatus.ONGOING)" class="px-3 py-1.5 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors">Return</button>
+                  }
+                  @case ('COMPLETED') {
+                    <button (click)="updateStatus(job.id, JobStatus.CLOSED)" class="px-3 py-1.5 bg-gray-500 text-white text-xs font-medium rounded-lg hover:bg-gray-600 transition-colors">Close</button>
+                  }
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center">
+              <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <p class="mt-4 text-gray-500 dark:text-gray-400">No job cards found</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Job Modal -->
+@if (showModal) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Create Job Card</h2>
+        <button (click)="showModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Number *</label>
+          <input [(ngModel)]="newJob.vehicleNumber" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white uppercase focus:ring-2 focus:ring-indigo-500" placeholder="MH12AB1234">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
+          <select [(ngModel)]="newJob.serviceType" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+            @for (type of serviceTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+          <textarea [(ngModel)]="newJob.serviceDescription" rows="3" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500" placeholder="Additional details..."></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3 rounded-b-2xl">
+        <button (click)="showModal = false" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600">Cancel</button>
+        <button (click)="createJob()" [disabled]="!newJob.vehicleNumber" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-indigo-700">Create</button>
+      </div>
+    </div>
+  </div>
+}

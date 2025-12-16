@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "Smart Garage Management System",
+    "version": "1.0.0",
+    "description": "ANPR-based garage management with real-time monitoring"
+  },
+  "cors": {
+    "origins": [
+      "http://10.1.2.85:4242",
+      "http://localhost:4242"
+    ],
+    "credentials": true,
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS"
+    ],
+    "allowedHeaders": [
+      "Content-Type",
+      "Authorization",
+      "Accept"
+    ]
+  },
+  "swagger": {
+    "enabled": true,
+    "title": "Smart Garage API",
+    "description": "API documentation for Smart Garage Management System",
+    "version": "1.0.0",
+    "path": "docs"
+  },
+  "websocket": {
+    "cors": {
+      "origins": [
+        "http://10.1.2.85:4242",
+        "http://localhost:4242"
+      ],
+      "credentials": true
+    },
+    "transports": [
+      "websocket",
+      "polling"
+    ]
+  },
+  "jobCard": {
+    "numberPrefix": "JOB",
+    "numberPadding": 6
+  },
+  "gateLog": {
+    "maxEventsPerPage": 50,
+    "retentionDays": 90
+  },
+  "indexedDb": {
+    "maxEvents": 500,
+    "dbName": "SmartGarageDB"
+  }
+}

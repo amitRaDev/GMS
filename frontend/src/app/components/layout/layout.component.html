@@ -1,0 +1,69 @@
+<app-alerts (closeJob)="handleCloseJob($event)" />
+
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+  <header class="bg-indigo-600 dark:bg-gray-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-8">
+          <a routerLink="/dashboard" class="flex items-center space-x-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span class="text-xl font-bold">Smart Garage</span>
+          </a>
+          <nav class="hidden md:flex space-x-1">
+            <a routerLink="/dashboard" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
+              class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
+              Dashboard
+            </a>
+            <a routerLink="/vehicles" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
+              class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
+              Vehicles
+            </a>
+            <a routerLink="/job-cards" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
+              class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
+              Job Cards
+            </a>
+            <a routerLink="/history" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
+              class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
+              History
+            </a>
+          </nav>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <!-- Theme Toggle -->
+          <button (click)="theme.toggle()" 
+            class="p-2 rounded-lg hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors"
+            [title]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
+            @if (theme.isDark()) {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+            } @else {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            }
+          </button>
+
+          @if (socket.connected()) {
+            <span class="flex items-center space-x-2 text-sm bg-indigo-500 dark:bg-green-600 px-3 py-1 rounded-full">
+              <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span>Live</span>
+            </span>
+          } @else {
+            <span class="flex items-center space-x-2 text-sm bg-red-500 px-3 py-1 rounded-full">
+              <span class="w-2 h-2 bg-red-300 rounded-full"></span>
+              <span>Offline</span>
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+</div>

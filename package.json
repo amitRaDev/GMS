@@ -1,0 +1,25 @@
+{
+  "name": "smart-garage-management-system",
+  "version": "1.0.0",
+  "description": "ANPR-based Smart Garage Management System with real-time monitoring",
+  "scripts": {
+    "env": "node scripts/set-env.js",
+    "prestart": "npm run env",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm run start:dev",
+    "start:frontend": "cd frontend && npm start",
+    "prebuild": "npm run env",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "clean": "rm -rf backend/dist frontend/dist"
+  },
+  "keywords": ["garage", "anpr", "vehicle-management", "nestjs", "angular"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "dotenv": "^16.3.1"
+  }
+}
