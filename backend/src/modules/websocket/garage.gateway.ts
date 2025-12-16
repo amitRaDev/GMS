@@ -44,6 +44,9 @@ export class GarageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     jobStatus?: string;
     message: string;
     timestamp: Date;
+    image?: string;
+    vehicleType?: string;
+    cameraId?: string;
   }) {
     console.log(`🚗 ${SocketEvents.ENTRY_REQUEST}:`, data.vehicleNumber, data.hasJobCard ? `(Job: ${data.jobNumber})` : '(No Job)');
     this.server.emit(SocketEvents.ENTRY_REQUEST, data);
@@ -60,6 +63,9 @@ export class GarageGateway implements OnGatewayConnection, OnGatewayDisconnect {
     isTestDrive: boolean;
     message: string;
     timestamp: Date;
+    image?: string;
+    vehicleType?: string;
+    cameraId?: string;
   }) {
     console.log(`🚙 ${SocketEvents.EXIT_REQUEST}:`, data.vehicleNumber, data.canExit ? '(Can Exit)' : '(Cannot Exit)');
     this.server.emit(SocketEvents.EXIT_REQUEST, data);

@@ -8,5 +8,6 @@ import { Vehicle, JobCard } from '../../common/entities';
   imports: [TypeOrmModule.forFeature([Vehicle, JobCard])],
   controllers: [GateController],
   providers: [GateService],
+  exports: [GateService],
 })
 export class GateModule {}

@@ -15,6 +15,10 @@ export interface CreateGateLogDto {
   actionTaken?: boolean;
   vehicleId?: string;
   jobCardId?: string;
+  cameraId?: string;
+  vehicleType?: string;
+  imageId?: string;
+  eventTime?: Date;
 }
 
 export interface PaginatedResult<T> {
@@ -47,6 +51,7 @@ export class GateLogService {
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.vehicle', 'vehicle')
       .leftJoinAndSelect('log.jobCard', 'jobCard')
+      .leftJoinAndSelect('log.image', 'image')
       .orderBy('log.createdAt', 'DESC');
 
     if (vehicleNumber) {

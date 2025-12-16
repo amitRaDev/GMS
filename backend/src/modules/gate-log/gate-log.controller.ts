@@ -21,12 +21,32 @@ export class GateLogController {
     @Query('vehicleNumber') vehicleNumber?: string,
     @Query('eventType') eventType?: GateEventType,
   ) {
-    return this.gateLogService.findAll(
+    const result = await this.gateLogService.findAll(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
       vehicleNumber,
       eventType,
     );
+    
+    // Transform data to include image directly
+    const data = result.data.map(log => ({
+      id: log.id,
+      vehicleNumber: log.vehicleNumber,
+      eventType: log.eventType,
+      direction: log.direction,
+      jobNumber: log.jobNumber,
+      previousStatus: log.previousStatus,
+      newStatus: log.newStatus,
+      message: log.message,
+      hasJobCard: log.hasJobCard,
+      actionTaken: log.actionTaken,
+      cameraId: log.cameraId,
+      vehicleType: log.vehicleType,
+      image: log.image?.data || null,
+      createdAt: log.createdAt,
+    }));
+    
+    return { ...result, data };
   }
 
   @Get('stats')

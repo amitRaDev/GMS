@@ -11,6 +11,9 @@ export interface EntryRequest {
   jobStatus?: string;
   message: string;
   timestamp: Date;
+  image?: string;
+  vehicleType?: string;
+  cameraId?: string;
 }
 
 export interface ExitRequest {
@@ -23,6 +26,9 @@ export interface ExitRequest {
   isTestDrive: boolean;
   message: string;
   timestamp: Date;
+  image?: string;
+  vehicleType?: string;
+  cameraId?: string;
 }
 
 export interface GateAlert {

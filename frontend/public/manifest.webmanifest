@@ -1,9 +1,13 @@
 {
-  "name": "frontend",
-  "short_name": "frontend",
+  "name": "Smart Garage Management System",
+  "short_name": "Smart Garage",
+  "description": "ANPR-based garage management with real-time monitoring",
   "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "background_color": "#1f2937",
+  "theme_color": "#4f46e5",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -53,5 +57,7 @@
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ]
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": []
 }

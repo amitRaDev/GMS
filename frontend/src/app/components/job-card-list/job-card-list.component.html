@@ -34,20 +34,22 @@
 
   <!-- Table -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="overflow-x-auto min-h-[300px] max-h-[calc(100vh-320px)] overflow-y-auto">
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-gray-700/50">
+      <thead class="bg-gray-50/95 dark:bg-gray-700/95 backdrop-blur-sm sticky top-0 z-10">
         <tr>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Job #</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Vehicle</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Service</th>
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Entry Time</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Exit Time</th>
           <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
         @for (job of filteredJobs(); track job.id; let odd = $odd) {
-          <tr [class]="odd ? 'bg-gray-50 dark:bg-gray-700/30' : 'bg-white dark:bg-gray-800'" class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+          <tr (click)="openJobDetail(job)" [class]="odd ? 'bg-gray-50 dark:bg-gray-700/30' : 'bg-white dark:bg-gray-800'" class="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors cursor-pointer">
             <td class="px-6 py-4 whitespace-nowrap font-mono text-sm font-medium text-gray-900 dark:text-white">{{ job.jobNumber }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
@@ -69,7 +71,14 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
               {{ job.vehicleEntryTime ? (job.vehicleEntryTime | date:'short') : 'Not entered' }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right">
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              @if (job.vehicleExitTime) {
+                <span class="text-gray-500 dark:text-gray-400">{{ job.vehicleExitTime | date:'short' }}</span>
+              } @else {
+                <span [class]="getExitTimeDisplay(job).class">{{ getExitTimeDisplay(job).text }}</span>
+              }
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right" (click)="$event.stopPropagation()">
               <div class="flex items-center justify-end gap-2">
                 @switch (job.status) {
                   @case ('IDLE') {
@@ -91,7 +100,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center">
+            <td colspan="7" class="px-6 py-12 text-center">
               <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
               </svg>
@@ -101,6 +110,7 @@
         }
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 
@@ -137,6 +147,143 @@
       <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3 rounded-b-2xl">
         <button (click)="showModal = false" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600">Cancel</button>
         <button (click)="createJob()" [disabled]="!newJob.vehicleNumber" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium disabled:opacity-50 hover:bg-indigo-700">Create</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Job Detail Modal -->
+@if (selectedJob) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="closeJobDetail()">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden" (click)="$event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ selectedJob.jobNumber }}</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Job Card Details</p>
+        </div>
+        <button (click)="closeJobDetail()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <!-- Status Badge -->
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium" [class]="getStatusBadge(selectedJob.status)">
+            <span class="w-2 h-2 rounded-full" [class]="getStatusDot(selectedJob.status)"></span>
+            {{ selectedJob.status.replace('_', ' ') }}
+          </span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Created {{ selectedJob.createdAt | date:'mediumDate' }}</span>
+        </div>
+
+        <!-- Vehicle Info -->
+        <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold text-gray-900 dark:text-white text-lg">{{ selectedJob.vehicle.vehicleNumber }}</p>
+              @if (selectedJob.vehicle.make || selectedJob.vehicle.model) {
+                <p class="text-sm text-gray-600 dark:text-gray-400">{{ selectedJob.vehicle.make }} {{ selectedJob.vehicle.model }}</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Owner Info -->
+        @if (selectedJob.vehicle.ownerName || selectedJob.vehicle.ownerPhone) {
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase font-medium">Owner Information</p>
+            <div class="space-y-2">
+              @if (selectedJob.vehicle.ownerName) {
+                <p class="text-gray-900 dark:text-white font-medium">{{ selectedJob.vehicle.ownerName }}</p>
+              }
+              @if (selectedJob.vehicle.ownerPhone) {
+                <p class="text-gray-600 dark:text-gray-400">{{ selectedJob.vehicle.ownerPhone }}</p>
+              }
+              @if (selectedJob.vehicle.ownerEmail) {
+                <p class="text-gray-600 dark:text-gray-400">{{ selectedJob.vehicle.ownerEmail }}</p>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Service Description -->
+        @if (selectedJob.serviceDescription) {
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase font-medium">Service Description</p>
+            <p class="text-gray-900 dark:text-white">{{ selectedJob.serviceDescription }}</p>
+          </div>
+        }
+
+        <!-- Times -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Entry Time</p>
+            <p class="font-medium text-gray-900 dark:text-white">
+              {{ selectedJob.vehicleEntryTime ? (selectedJob.vehicleEntryTime | date:'short') : 'Not entered' }}
+            </p>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Exit Time</p>
+            @if (selectedJob.vehicleExitTime) {
+              <p class="font-medium text-gray-900 dark:text-white">{{ selectedJob.vehicleExitTime | date:'short' }}</p>
+            } @else {
+              <p class="font-medium" [class]="getExitTimeDisplay(selectedJob).class">{{ getExitTimeDisplay(selectedJob).text }}</p>
+            }
+          </div>
+        </div>
+
+        @if (selectedJob.testDriveOutTime || selectedJob.testDriveInTime) {
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
+              <p class="text-xs text-blue-600 dark:text-blue-400 mb-1">Test Drive Out</p>
+              <p class="font-medium text-gray-900 dark:text-white">
+                {{ selectedJob.testDriveOutTime ? (selectedJob.testDriveOutTime | date:'short') : '-' }}
+              </p>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3">
+              <p class="text-xs text-blue-600 dark:text-blue-400 mb-1">Test Drive Return</p>
+              <p class="font-medium text-gray-900 dark:text-white">
+                {{ selectedJob.testDriveInTime ? (selectedJob.testDriveInTime | date:'short') : '-' }}
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- Notes -->
+        @if (selectedJob.notes) {
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase font-medium">Notes</p>
+            <p class="text-gray-900 dark:text-white">{{ selectedJob.notes }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+        @switch (selectedJob.status) {
+          @case ('IDLE') {
+            <button (click)="updateStatus(selectedJob.id, JobStatus.ONGOING); closeJobDetail()" class="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600">Start Service</button>
+          }
+          @case ('ONGOING') {
+            <button (click)="updateStatus(selectedJob.id, JobStatus.TEST_DRIVE); closeJobDetail()" class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600">Test Drive</button>
+            <button (click)="updateStatus(selectedJob.id, JobStatus.COMPLETED); closeJobDetail()" class="flex-1 px-4 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600">Complete</button>
+          }
+          @case ('TEST_DRIVE') {
+            <button (click)="updateStatus(selectedJob.id, JobStatus.ONGOING); closeJobDetail()" class="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600">Return</button>
+          }
+          @case ('COMPLETED') {
+            <button (click)="updateStatus(selectedJob.id, JobStatus.CLOSED); closeJobDetail()" class="flex-1 px-4 py-2.5 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600">Close Job</button>
+          }
+          @default {
+            <button (click)="closeJobDetail()" class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium">Close</button>
+          }
+        }
       </div>
     </div>
   </div>

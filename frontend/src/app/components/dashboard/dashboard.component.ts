@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
+import { PwaService } from '../../services/pwa.service';
 import { JobCard, JobStatus, ServiceType } from '../../models';
 
 @Component({
@@ -14,6 +15,7 @@ import { JobCard, JobStatus, ServiceType } from '../../models';
 export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
   socketService = inject(SocketService);
+  pwa = inject(PwaService);
 
   JobStatus = JobStatus;
   serviceTypes = Object.values(ServiceType);
@@ -22,11 +24,24 @@ export class DashboardComponent implements OnInit {
   showCreateModal = false;
   showSimulator = false;
   showCreateJobAfterEntry = false;
+  showUpdateStatusAfterEntry = false;
   pendingVehicleNumber = '';
+  pendingJobCard: any = null;
   simVehicle = '';
   simResult: any = null;
 
-  createForm = { vehicleNumber: '', serviceType: ServiceType.GENERAL_SERVICE, serviceDescription: '' };
+  createForm = { 
+    vehicleNumber: '', 
+    serviceType: ServiceType.GENERAL_SERVICE, 
+    serviceDescription: '',
+    ownerName: '',
+    ownerPhone: '',
+    ownerEmail: '',
+    make: '',
+    model: '',
+    color: ''
+  };
+  showMoreDetails = false;
 
   stats = signal([
     { label: 'Waiting', count: 0, color: 'text-yellow-600', bgColor: 'bg-yellow-100', iconColor: 'text-yellow-600', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -64,17 +79,38 @@ export class DashboardComponent implements OnInit {
   allowEntry() {
     const req = this.socketService.entryRequest();
     if (!req) return;
-    this.api.confirmEntry(req.vehicleNumber).subscribe((res: any) => {
-      this.socketService.clearEntryRequest();
-      this.loadJobCards();
-      if (res.action === 'ENTRY_ALLOWED_NO_JOB' || !req.hasJobCard) {
-        this.pendingVehicleNumber = req.vehicleNumber;
-        this.showCreateJobAfterEntry = true;
-      }
-    });
+    
+    this.pendingVehicleNumber = req.vehicleNumber;
+    this.socketService.clearEntryRequest();
+    
+    if (req.hasJobCard && req.jobCardId) {
+      // Job card exists - show status update popup
+      this.pendingJobCard = { id: req.jobCardId, jobNumber: req.jobNumber, status: req.jobStatus };
+      this.showUpdateStatusAfterEntry = true;
+    } else {
+      // No job card - show create job card popup
+      this.showCreateJobAfterEntry = true;
+    }
   }
 
   denyEntry() { this.socketService.clearEntryRequest(); }
+
+  // Update status after entry (when job card exists)
+  updateStatusAfterEntry(status: JobStatus) {
+    if (!this.pendingJobCard) return;
+    this.api.updateJobStatus(this.pendingJobCard.id, status).subscribe(() => {
+      this.showUpdateStatusAfterEntry = false;
+      this.pendingJobCard = null;
+      this.pendingVehicleNumber = '';
+      this.loadJobCards();
+    });
+  }
+
+  skipStatusUpdate() {
+    this.showUpdateStatusAfterEntry = false;
+    this.pendingJobCard = null;
+    this.pendingVehicleNumber = '';
+  }
 
   allowExit() {
     const req = this.socketService.exitRequest();
@@ -90,25 +126,65 @@ export class DashboardComponent implements OnInit {
   createJobAfterEntry() {
     if (!this.pendingVehicleNumber) return;
     const desc = this.createForm.serviceType + (this.createForm.serviceDescription ? ' - ' + this.createForm.serviceDescription : '');
-    this.api.createJobCard({ vehicleNumber: this.pendingVehicleNumber, serviceDescription: desc }).subscribe(() => {
-      this.showCreateJobAfterEntry = false;
-      this.pendingVehicleNumber = '';
-      this.createForm = { vehicleNumber: '', serviceType: ServiceType.GENERAL_SERVICE, serviceDescription: '' };
-      this.loadJobCards();
+    this.api.createJobCard({ 
+      vehicleNumber: this.pendingVehicleNumber, 
+      serviceDescription: desc,
+      ownerName: this.createForm.ownerName || undefined,
+      ownerPhone: this.createForm.ownerPhone || undefined,
+      ownerEmail: this.createForm.ownerEmail || undefined,
+      make: this.createForm.make || undefined,
+      model: this.createForm.model || undefined,
+      color: this.createForm.color || undefined,
+    }).subscribe((job: any) => {
+      // Auto-set to ONGOING after creating
+      if (job?.id) {
+        this.api.updateJobStatus(job.id, JobStatus.ONGOING).subscribe(() => {
+          this.resetCreateForm();
+          this.loadJobCards();
+        });
+      } else {
+        this.resetCreateForm();
+        this.loadJobCards();
+      }
     });
   }
 
-  skipJobCreation() {
+  resetCreateForm() {
     this.showCreateJobAfterEntry = false;
+    this.showCreateModal = false;
+    this.showMoreDetails = false;
     this.pendingVehicleNumber = '';
+    this.createForm = { 
+      vehicleNumber: '', 
+      serviceType: ServiceType.GENERAL_SERVICE, 
+      serviceDescription: '',
+      ownerName: '',
+      ownerPhone: '',
+      ownerEmail: '',
+      make: '',
+      model: '',
+      color: ''
+    };
+  }
+
+  skipJobCreation() {
+    this.resetCreateForm();
   }
 
   submitCreateJob() {
     if (!this.createForm.vehicleNumber) return;
     const desc = this.createForm.serviceType + (this.createForm.serviceDescription ? ' - ' + this.createForm.serviceDescription : '');
-    this.api.createJobCard({ vehicleNumber: this.createForm.vehicleNumber, serviceDescription: desc }).subscribe(() => {
-      this.showCreateModal = false;
-      this.createForm = { vehicleNumber: '', serviceType: ServiceType.GENERAL_SERVICE, serviceDescription: '' };
+    this.api.createJobCard({ 
+      vehicleNumber: this.createForm.vehicleNumber, 
+      serviceDescription: desc,
+      ownerName: this.createForm.ownerName || undefined,
+      ownerPhone: this.createForm.ownerPhone || undefined,
+      ownerEmail: this.createForm.ownerEmail || undefined,
+      make: this.createForm.make || undefined,
+      model: this.createForm.model || undefined,
+      color: this.createForm.color || undefined,
+    }).subscribe(() => {
+      this.resetCreateForm();
       this.loadJobCards();
     });
   }
@@ -135,6 +211,10 @@ export class DashboardComponent implements OnInit {
 
   clearEvents() {
     this.socketService.clearAllEvents();
+  }
+
+  dismissInstallCard() {
+    this.pwa.dismiss();
   }
 
   getEventBgClass(type: string) {

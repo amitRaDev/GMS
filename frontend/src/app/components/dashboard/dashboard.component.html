@@ -6,6 +6,15 @@
       <p class="text-gray-500 dark:text-gray-400 mt-1">Real-time garage monitoring</p>
     </div>
     <div class="flex gap-3">
+      @if (pwa.canInstall() && !pwa.isInstalled()) {
+        <button (click)="pwa.install()"
+          class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all shadow-sm">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Install App
+        </button>
+      }
       <button (click)="showCreateModal = true" 
         class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,14 +22,14 @@
         </svg>
         New Job Card
       </button>
-      <button (click)="showSimulator = true"
+      <!-- <button (click)="showSimulator = true"
         class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600 shadow-sm">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         Gate Simulator
-      </button>
+      </button> -->
     </div>
   </div>
 
@@ -43,6 +52,48 @@
     }
   </div>
 
+  <!-- Install App Card -->
+  @if (!pwa.isInstalled() && !pwa.isDismissed()) {
+    <div class="mb-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl p-5 shadow-lg">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-white font-semibold text-lg">Install Smart Garage</h3>
+            <p class="text-white/80 text-sm">
+              @if (pwa.canInstall()) {
+                Get quick access from your home screen
+              } @else {
+                Use browser menu → "Add to Home Screen" or "Install App"
+              }
+            </p>
+          </div>
+        </div>
+        @if (pwa.canInstall()) {
+          <button (click)="pwa.install()"
+            class="w-full sm:w-auto px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors shadow-md flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Install Now
+          </button>
+        } @else {
+          <button (click)="dismissInstallCard()"
+            class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            title="Dismiss">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Job Cards -->
     <div class="lg:col-span-2">
@@ -51,7 +102,7 @@
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Active Job Cards</h2>
         </div>
         <div class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(100vh-400px)] md:max-h-[500px] overflow-y-auto">
             @for (job of jobCards(); track job.id) {
               <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border-l-4" [class]="getStatusBorder(job.status)">
                 <div class="flex justify-between items-start mb-3">
@@ -150,7 +201,7 @@
         </div>
         
         <!-- Events List -->
-        <div class="divide-y divide-gray-100 dark:divide-gray-700/50 max-h-[480px] overflow-y-auto">
+        <div class="divide-y divide-gray-100 dark:divide-gray-700/50 max-h-[calc(100vh-400px)] md:max-h-[480px] overflow-y-auto">
           @for (event of socketService.events(); track $index) {
             <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
               <div class="flex items-start gap-3">
@@ -202,10 +253,18 @@
           <div>
             <p class="text-sm opacity-80">Vehicle Entry Request</p>
             <p class="text-2xl font-bold">{{ socketService.entryRequest()?.vehicleNumber }}</p>
+            @if (socketService.entryRequest()?.vehicleType) {
+              <p class="text-sm opacity-80">{{ socketService.entryRequest()?.vehicleType }}</p>
+            }
           </div>
         </div>
       </div>
       <div class="p-6">
+        @if (socketService.entryRequest()?.image) {
+          <div class="mb-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <img [src]="socketService.entryRequest()?.image" alt="Vehicle capture" class="w-full h-48 object-cover">
+          </div>
+        }
         @if (socketService.entryRequest()?.hasJobCard) {
           <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
             <p class="text-green-800 dark:text-green-300 font-medium">Job Card Found</p>
@@ -249,10 +308,18 @@
           <div>
             <p class="text-sm opacity-80">Vehicle Exit Request</p>
             <p class="text-2xl font-bold">{{ socketService.exitRequest()?.vehicleNumber }}</p>
+            @if (socketService.exitRequest()?.vehicleType) {
+              <p class="text-sm opacity-80">{{ socketService.exitRequest()?.vehicleType }}</p>
+            }
           </div>
         </div>
       </div>
       <div class="p-6">
+        @if (socketService.exitRequest()?.image) {
+          <div class="mb-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <img [src]="socketService.exitRequest()?.image" alt="Vehicle capture" class="w-full h-48 object-cover">
+          </div>
+        }
         @if (socketService.exitRequest()?.canExit) {
           <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
             <p class="text-blue-800 dark:text-blue-300 font-medium">Exit Allowed</p>
@@ -287,11 +354,63 @@
 }
 
 
+<!-- Update Status Popup (after entry with existing job card) -->
+@if (showUpdateStatusAfterEntry && pendingJobCard) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div class="bg-green-500 p-6">
+        <div class="flex items-center gap-4 text-white">
+          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm opacity-80">Entry Permitted</p>
+            <p class="text-2xl font-bold">{{ pendingVehicleNumber }}</p>
+            <p class="text-sm opacity-80">{{ pendingJobCard.jobNumber }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="p-6">
+        <p class="text-gray-600 dark:text-gray-300 mb-4">Update job card status?</p>
+        <div class="space-y-3">
+          @if (pendingJobCard.status === 'IDLE') {
+            <button (click)="updateStatusAfterEntry(JobStatus.ONGOING)"
+              class="w-full px-4 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              </svg>
+              Start Service (ONGOING)
+            </button>
+          }
+          @if (pendingJobCard.status === 'TEST_DRIVE') {
+            <button (click)="updateStatusAfterEntry(JobStatus.ONGOING)"
+              class="w-full px-4 py-3 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+              </svg>
+              Return from Test Drive
+            </button>
+          }
+          @if (pendingJobCard.status === 'ONGOING') {
+            <p class="text-center text-gray-500 dark:text-gray-400">Job is already ONGOING</p>
+          }
+        </div>
+        <button (click)="skipStatusUpdate()" 
+          class="w-full mt-4 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
+          Skip
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- Create Job Card Popup (after entry without job) -->
 @if (showCreateJobAfterEntry) {
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-      <div class="bg-indigo-500 p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="bg-amber-500 p-6 flex-shrink-0">
         <div class="flex items-center gap-4 text-white">
           <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,36 +418,95 @@
             </svg>
           </div>
           <div>
-            <p class="text-sm opacity-80">Entry Allowed</p>
+            <p class="text-sm opacity-80">Entry Permitted - No Job Card</p>
             <p class="text-2xl font-bold">{{ pendingVehicleNumber }}</p>
           </div>
         </div>
       </div>
-      <div class="p-6">
-        <p class="text-gray-600 dark:text-gray-300 mb-4">Vehicle has entered. Create a job card now?</p>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
-          <select [(ngModel)]="createForm.serviceType"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
-            @for (type of serviceTypes; track type) {
-              <option [value]="type">{{ type }}</option>
-            }
-          </select>
+      <div class="p-6 overflow-y-auto flex-1">
+        <p class="text-gray-600 dark:text-gray-300 mb-4">Create a job card for this vehicle?</p>
+        
+        <!-- Required Fields -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Owner Name <span class="text-red-500">*</span></label>
+            <input [(ngModel)]="createForm.ownerName" 
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter owner name">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number <span class="text-red-500">*</span></label>
+            <input [(ngModel)]="createForm.ownerPhone" type="tel"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter phone number">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
+            <select [(ngModel)]="createForm.serviceType"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+              @for (type of serviceTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
         </div>
-        <div class="mt-4">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes (optional)</label>
-          <textarea [(ngModel)]="createForm.serviceDescription" rows="2"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            placeholder="Additional details..."></textarea>
-        </div>
+
+        <!-- Fill More Details Button -->
+        <button (click)="showMoreDetails = !showMoreDetails" 
+          class="w-full mt-4 px-4 py-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg flex items-center justify-center gap-2 transition-colors">
+          <svg class="w-4 h-4 transition-transform" [class.rotate-180]="showMoreDetails" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          {{ showMoreDetails ? 'Hide Details' : 'Fill More Details' }}
+        </button>
+
+        <!-- Optional Fields (Expandable) -->
+        @if (showMoreDetails) {
+          <div class="space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+              <input [(ngModel)]="createForm.ownerEmail" type="email"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="owner@email.com">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Make</label>
+                <input [(ngModel)]="createForm.make"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Toyota">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model</label>
+                <input [(ngModel)]="createForm.model"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Camry">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+              <input [(ngModel)]="createForm.color"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="White">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
+              <textarea [(ngModel)]="createForm.serviceDescription" rows="2"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="Additional details..."></textarea>
+            </div>
+          </div>
+        }
+
         <div class="flex gap-3 mt-6">
           <button (click)="skipJobCreation()" 
             class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700">
             Skip
           </button>
           <button (click)="createJobAfterEntry()" 
-            class="flex-1 px-4 py-3 bg-indigo-500 text-white rounded-xl font-medium hover:bg-indigo-600">
-            Create Job Card
+            [disabled]="!createForm.ownerName || !createForm.ownerPhone"
+            class="flex-1 px-4 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed">
+            Create & Start
           </button>
         </div>
       </div>
@@ -339,21 +517,34 @@
 <!-- Create Job Modal -->
 @if (showCreateModal) {
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg">
-      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Create Job Card</h2>
-        <button (click)="showCreateModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <button (click)="resetCreateForm()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
-      <div class="p-6 space-y-4">
+      <div class="p-6 space-y-4 overflow-y-auto flex-1">
+        <!-- Required Fields -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Number</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Number <span class="text-red-500">*</span></label>
           <input [(ngModel)]="createForm.vehicleNumber" 
             class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white uppercase focus:ring-2 focus:ring-indigo-500"
             placeholder="MH12AB1234">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Owner Name <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="createForm.ownerName" 
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter owner name">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number <span class="text-red-500">*</span></label>
+          <input [(ngModel)]="createForm.ownerPhone" type="tel"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="Enter phone number">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Type</label>
@@ -364,20 +555,61 @@
             }
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
-          <textarea [(ngModel)]="createForm.serviceDescription" rows="3"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            placeholder="Additional details..."></textarea>
-        </div>
+
+        <!-- Fill More Details Button -->
+        <button (click)="showMoreDetails = !showMoreDetails" 
+          class="w-full px-4 py-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg flex items-center justify-center gap-2 transition-colors">
+          <svg class="w-4 h-4 transition-transform" [class.rotate-180]="showMoreDetails" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          {{ showMoreDetails ? 'Hide Details' : 'Fill More Details' }}
+        </button>
+
+        <!-- Optional Fields (Expandable) -->
+        @if (showMoreDetails) {
+          <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+              <input [(ngModel)]="createForm.ownerEmail" type="email"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="owner@email.com">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Make</label>
+                <input [(ngModel)]="createForm.make"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Toyota">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model</label>
+                <input [(ngModel)]="createForm.model"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Camry">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+              <input [(ngModel)]="createForm.color"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="White">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
+              <textarea [(ngModel)]="createForm.serviceDescription" rows="2"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                placeholder="Additional details..."></textarea>
+            </div>
+          </div>
+        }
       </div>
-      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3 rounded-b-2xl">
-        <button (click)="showCreateModal = false" 
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3 rounded-b-2xl flex-shrink-0">
+        <button (click)="resetCreateForm()" 
           class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600">
           Cancel
         </button>
         <button (click)="submitCreateJob()" 
-          [disabled]="!createForm.vehicleNumber"
+          [disabled]="!createForm.vehicleNumber || !createForm.ownerName || !createForm.ownerPhone"
           class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
           Create
         </button>

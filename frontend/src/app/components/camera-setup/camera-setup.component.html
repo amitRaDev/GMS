@@ -1,0 +1,270 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Camera Setup</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">Configure ANPR cameras for gate monitoring</p>
+    </div>
+    <button (click)="openCreateModal()"
+      class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Camera
+    </button>
+  </div>
+
+  <!-- API Endpoint Info -->
+  <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-5 mb-8 shadow-lg">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-white font-semibold">API Endpoint</h3>
+          <p class="text-white/80 text-sm font-mono break-all">{{ apiEndpoint }}</p>
+        </div>
+      </div>
+      <button (click)="copyEndpoint()"
+        class="px-4 py-2 bg-white/20 text-white text-sm font-medium rounded-lg hover:bg-white/30 transition-colors">
+        Copy URL
+      </button>
+    </div>
+  </div>
+
+  <!-- Cameras Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (camera of cameras(); track camera.id) {
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="p-5">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                [class]="camera.isActive ? 'bg-green-100 dark:bg-green-900/50' : 'bg-gray-100 dark:bg-gray-700'">
+                <svg class="w-5 h-5" [class]="camera.isActive ? 'text-green-600 dark:text-green-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white">{{ camera.name }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ camera.cameraId }}</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-medium" [class]="getGateTypeClass(camera.gateType)">
+              {{ camera.gateType }}
+            </span>
+          </div>
+
+          @if (camera.location) {
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              {{ camera.location }}
+            </p>
+          }
+
+          <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2">
+              <button (click)="toggleActive(camera)"
+                class="p-2 rounded-lg transition-colors"
+                [class]="camera.isActive ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                [title]="camera.isActive ? 'Disable' : 'Enable'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="camera.isActive ? 'M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z' : 'M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414'"/>
+                </svg>
+              </button>
+              <button (click)="showToken(camera)"
+                class="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                title="View API Token">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+              </button>
+            </div>
+            <button (click)="deleteCamera(camera)"
+              class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+              title="Delete">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-span-full text-center py-16">
+        <div class="w-20 h-20 mx-auto bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400 font-medium">No cameras configured</p>
+        <button (click)="openCreateModal()" class="mt-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 text-sm font-medium">
+          Add your first camera
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+
+<!-- Create Camera Modal -->
+@if (showCreateModal) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Add Camera</h2>
+        <button (click)="showCreateModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Camera ID</label>
+          <input [(ngModel)]="createForm.cameraId"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="CAM-001">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Unique identifier sent by the ANPR camera</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+          <input [(ngModel)]="createForm.name"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="Main Gate Camera">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+          <input [(ngModel)]="createForm.location"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="Front entrance">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gate Type</label>
+          <select [(ngModel)]="createForm.gateType"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500">
+            <option value="IN">Entry Only (IN)</option>
+            <option value="OUT">Exit Only (OUT)</option>
+            <option value="BOTH">Both (IN/OUT)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+          <textarea [(ngModel)]="createForm.description" rows="2"
+            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+            placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex gap-3 rounded-b-2xl">
+        <button (click)="showCreateModal = false"
+          class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-600">
+          Cancel
+        </button>
+        <button (click)="submitCreate()"
+          [disabled]="!createForm.cameraId || !createForm.name"
+          class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Token Modal -->
+@if (showTokenModal && selectedCamera) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">API Configuration - {{ selectedCamera.name }}</h2>
+        <button (click)="showTokenModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- API Token -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">API Token (Bearer)</label>
+          <div class="flex gap-2">
+            <input type="text" readonly [value]="selectedCamera.apiToken"
+              class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm">
+            <button (click)="copyToken()"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+              {{ copiedToken ? 'Copied!' : 'Copy' }}
+            </button>
+            <button (click)="regenerateToken()"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              Regenerate
+            </button>
+          </div>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-2">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Keep this token secure. Regenerating will invalidate the old token.
+          </p>
+        </div>
+
+        <!-- cURL Example -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">cURL Example</label>
+            <button (click)="copyCurlExample()"
+              class="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700">
+              Copy cURL
+            </button>
+          </div>
+          <pre class="p-4 bg-gray-900 text-gray-100 rounded-lg text-xs overflow-x-auto"><code>curl --location '{{ apiEndpoint }}' \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer {{ selectedCamera.apiToken }}' \
+  --data '&#123;
+    "cameraId": "{{ selectedCamera.cameraId }}",
+    "registrationNumber": "MH12AB1234",
+    "movementType": "IN",
+    "time": "2025-12-23T10:30:00.000Z",
+    "vehicleType": "Car",
+    "image": "data:image/png;base64,..."
+  &#125;'</code></pre>
+        </div>
+
+        <!-- Payload Schema -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payload Schema</label>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm">
+            <table class="w-full">
+              <thead>
+                <tr class="text-left text-gray-500 dark:text-gray-400">
+                  <th class="pb-2">Field</th>
+                  <th class="pb-2">Type</th>
+                  <th class="pb-2">Required</th>
+                  <th class="pb-2">Description</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-700 dark:text-gray-300">
+                <tr><td class="py-1 font-mono text-xs">cameraId</td><td>string</td><td>Yes</td><td>Camera identifier</td></tr>
+                <tr><td class="py-1 font-mono text-xs">registrationNumber</td><td>string</td><td>Yes</td><td>Vehicle plate number</td></tr>
+                <tr><td class="py-1 font-mono text-xs">movementType</td><td>IN | OUT</td><td>Yes</td><td>Direction of movement</td></tr>
+                <tr><td class="py-1 font-mono text-xs">time</td><td>ISO 8601</td><td>Yes</td><td>Event timestamp</td></tr>
+                <tr><td class="py-1 font-mono text-xs">vehicleType</td><td>string</td><td>No</td><td>Type of vehicle</td></tr>
+                <tr><td class="py-1 font-mono text-xs">image</td><td>base64</td><td>No</td><td>Captured image</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl">
+        <button (click)="showTokenModal = false"
+          class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+}

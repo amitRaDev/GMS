@@ -17,7 +17,16 @@ export class ApiService {
     return this.http.get<JobCard[]>(`${this.baseUrl}/job-cards/active`);
   }
 
-  createJobCard(data: { vehicleNumber: string; serviceDescription?: string }) {
+  createJobCard(data: { 
+    vehicleNumber: string; 
+    serviceDescription?: string;
+    ownerName?: string;
+    ownerPhone?: string;
+    ownerEmail?: string;
+    make?: string;
+    model?: string;
+    color?: string;
+  }) {
     return this.http.post<JobCard>(`${this.baseUrl}/job-cards`, data);
   }
 
@@ -84,6 +93,31 @@ export class ApiService {
       todayExits: number;
     }>(`${this.baseUrl}/gate-logs/stats`);
   }
+
+  // Cameras
+  getCameras() {
+    return this.http.get<Camera[]>(`${this.baseUrl}/camera`);
+  }
+
+  getCamera(id: string) {
+    return this.http.get<Camera>(`${this.baseUrl}/camera/${id}`);
+  }
+
+  createCamera(data: CreateCameraDto) {
+    return this.http.post<Camera>(`${this.baseUrl}/camera`, data);
+  }
+
+  updateCamera(id: string, data: Partial<Camera>) {
+    return this.http.put<Camera>(`${this.baseUrl}/camera/${id}`, data);
+  }
+
+  deleteCamera(id: string) {
+    return this.http.delete(`${this.baseUrl}/camera/${id}`);
+  }
+
+  regenerateCameraToken(id: string) {
+    return this.http.post<Camera>(`${this.baseUrl}/camera/${id}/regenerate-token`, {});
+  }
 }
 
 export interface GateLog {
@@ -97,5 +131,29 @@ export interface GateLog {
   message?: string;
   hasJobCard: boolean;
   actionTaken: boolean;
+  cameraId?: string;
+  vehicleType?: string;
+  image?: string;
   createdAt: string;
+}
+
+export interface Camera {
+  id: string;
+  cameraId: string;
+  name: string;
+  location?: string;
+  gateType: 'IN' | 'OUT' | 'BOTH';
+  isActive: boolean;
+  apiToken?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCameraDto {
+  cameraId: string;
+  name: string;
+  location?: string;
+  gateType?: 'IN' | 'OUT' | 'BOTH';
+  description?: string;
 }

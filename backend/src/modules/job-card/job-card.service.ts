@@ -37,7 +37,15 @@ export class JobCardService {
     });
   }
 
-  async create(data: Partial<JobCard> & { vehicleNumber?: string }) {
+  async create(data: Partial<JobCard> & { 
+    vehicleNumber?: string;
+    ownerName?: string;
+    ownerPhone?: string;
+    ownerEmail?: string;
+    make?: string;
+    model?: string;
+    color?: string;
+  }) {
     let vehicle: Vehicle;
 
     if (data.vehicleNumber) {
@@ -45,8 +53,27 @@ export class JobCardService {
       vehicle = await this.vehicleRepo.findOne({ where: { vehicleNumber: normalized } });
 
       if (!vehicle) {
-        vehicle = this.vehicleRepo.create({ vehicleNumber: normalized });
+        vehicle = this.vehicleRepo.create({ 
+          vehicleNumber: normalized,
+          ownerName: data.ownerName,
+          ownerPhone: data.ownerPhone,
+          ownerEmail: data.ownerEmail,
+          make: data.make,
+          model: data.model,
+          color: data.color,
+        });
         vehicle = await this.vehicleRepo.save(vehicle);
+      } else {
+        // Update vehicle details if provided
+        if (data.ownerName || data.ownerPhone || data.ownerEmail || data.make || data.model || data.color) {
+          if (data.ownerName) vehicle.ownerName = data.ownerName;
+          if (data.ownerPhone) vehicle.ownerPhone = data.ownerPhone;
+          if (data.ownerEmail) vehicle.ownerEmail = data.ownerEmail;
+          if (data.make) vehicle.make = data.make;
+          if (data.model) vehicle.model = data.model;
+          if (data.color) vehicle.color = data.color;
+          vehicle = await this.vehicleRepo.save(vehicle);
+        }
       }
       data.vehicleId = vehicle.id;
     }

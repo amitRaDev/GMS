@@ -1,7 +1,8 @@
 <app-alerts (closeJob)="handleCloseJob($event)" />
 
 <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
-  <header class="bg-indigo-600 dark:bg-gray-800 text-white shadow-lg">
+  <!-- Desktop Header - Hidden on mobile -->
+  <header class="hidden md:block bg-indigo-600 dark:bg-gray-800 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center space-x-8">
@@ -11,7 +12,7 @@
             </svg>
             <span class="text-xl font-bold">Smart Garage</span>
           </a>
-          <nav class="hidden md:flex space-x-1">
+          <nav class="flex space-x-1">
             <a routerLink="/dashboard" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
               class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
               Dashboard
@@ -26,16 +27,18 @@
             </a>
             <a routerLink="/history" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
               class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
-              History
+              Logs
+            </a>
+            <a routerLink="/cameras" routerLinkActive="bg-indigo-700 dark:bg-gray-700"
+              class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
+              Cameras
             </a>
           </nav>
         </div>
 
         <div class="flex items-center space-x-3">
-          <!-- Theme Toggle -->
           <button (click)="theme.toggle()" 
-            class="p-2 rounded-lg hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors"
-            [title]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
+            class="p-2 rounded-lg hover:bg-indigo-500 dark:hover:bg-gray-700 transition-colors">
             @if (theme.isDark()) {
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -46,7 +49,6 @@
               </svg>
             }
           </button>
-
           @if (socket.connected()) {
             <span class="flex items-center space-x-2 text-sm bg-indigo-500 dark:bg-green-600 px-3 py-1 rounded-full">
               <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -63,7 +65,50 @@
     </div>
   </header>
 
-  <main>
+  <!-- Main Content - Add bottom padding on mobile for nav bar -->
+  <main class="pb-20 md:pb-0">
     <router-outlet />
   </main>
+
+  <!-- Mobile Bottom Navigation - 4 buttons -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-50 safe-area-bottom">
+    <div class="flex justify-around items-center h-16">
+      <!-- Dashboard -->
+      <a routerLink="/dashboard" routerLinkActive="text-indigo-600 dark:text-indigo-400"
+        class="flex flex-col items-center justify-center flex-1 py-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+        [routerLinkActiveOptions]="{exact: true}">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+        </svg>
+        <span class="text-xs mt-1 font-medium">Dashboard</span>
+      </a>
+
+      <!-- Logs (Gate History) -->
+      <a routerLink="/history" routerLinkActive="text-indigo-600 dark:text-indigo-400"
+        class="flex flex-col items-center justify-center flex-1 py-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <span class="text-xs mt-1 font-medium">Logs</span>
+      </a>
+
+      <!-- Vehicle Entry List -->
+      <a routerLink="/vehicles" routerLinkActive="text-indigo-600 dark:text-indigo-400"
+        class="flex flex-col items-center justify-center flex-1 py-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <span class="text-xs mt-1 font-medium">Vehicles</span>
+      </a>
+
+      <!-- Job Card List -->
+      <a routerLink="/job-cards" routerLinkActive="text-indigo-600 dark:text-indigo-400"
+        class="flex flex-col items-center justify-center flex-1 py-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+        <span class="text-xs mt-1 font-medium">Job Cards</span>
+      </a>
+    </div>
+  </nav>
 </div>

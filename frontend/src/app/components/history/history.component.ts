@@ -22,6 +22,13 @@ export class HistoryComponent implements OnInit {
 
   searchVehicle = '';
   filterEventType = '';
+  
+  // Image preview
+  selectedImage: string | null = null;
+  selectedVehicle = '';
+  
+  // Log detail modal
+  selectedLog: GateLog | null = null;
 
   eventTypes = [
     'ENTRY_REQUEST', 'ENTRY_ALLOWED', 'ENTRY_DENIED',
@@ -105,5 +112,23 @@ export class HistoryComponent implements OnInit {
       JOB_CLOSED: 'bg-gray-100 text-gray-800',
     };
     return classes[type] || 'bg-gray-100 text-gray-800';
+  }
+
+  openImagePreview(image: string, vehicleNumber: string) {
+    this.selectedImage = image;
+    this.selectedVehicle = vehicleNumber;
+  }
+
+  closeImagePreview() {
+    this.selectedImage = null;
+    this.selectedVehicle = '';
+  }
+
+  openLogDetail(log: GateLog) {
+    this.selectedLog = log;
+  }
+
+  closeLogDetail() {
+    this.selectedLog = null;
   }
 }

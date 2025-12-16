@@ -26,6 +26,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/history/history.component').then((m) => m.HistoryComponent),
       },
+      {
+        path: 'cameras',
+        loadComponent: () =>
+          import('./components/camera-setup/camera-setup.component').then((m) => m.CameraSetupComponent),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

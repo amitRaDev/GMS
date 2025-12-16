@@ -24,6 +24,9 @@ export class JobCardListComponent implements OnInit {
   filterStatus: JobStatus | null = null;
   showModal = false;
   newJob = { vehicleNumber: '', serviceType: ServiceType.GENERAL_SERVICE, serviceDescription: '' };
+  
+  // Detail modal
+  selectedJob: JobCard | null = null;
 
   constructor() {
     effect(() => {
@@ -70,5 +73,27 @@ export class JobCardListComponent implements OnInit {
 
   getStatusDot(status: string): string {
     return { IDLE: 'bg-yellow-500', ONGOING: 'bg-green-500', TEST_DRIVE: 'bg-blue-500', COMPLETED: 'bg-purple-500', CLOSED: 'bg-gray-400' }[status] || '';
+  }
+
+  getExitTimeDisplay(job: JobCard): { text: string; class: string } {
+    if (!job.vehicleEntryTime) {
+      return { text: 'Not entered', class: 'text-gray-400 dark:text-gray-500' };
+    }
+    if (job.vehicleExitTime) {
+      return { text: '', class: 'text-gray-500 dark:text-gray-400' }; // Will use date pipe
+    }
+    // Entered but not exited
+    if (job.status === JobStatus.CLOSED || job.status === JobStatus.COMPLETED) {
+      return { text: 'Pending exit', class: 'text-amber-600 dark:text-amber-400' };
+    }
+    return { text: 'In service', class: 'text-green-600 dark:text-green-400' };
+  }
+
+  openJobDetail(job: JobCard) {
+    this.selectedJob = job;
+  }
+
+  closeJobDetail() {
+    this.selectedJob = null;
   }
 }

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Vehicle } from './vehicle.entity';
 import { JobCard } from './job-card.entity';
+import { Image } from './image.entity';
 
 export enum GateEventType {
   ENTRY_REQUEST = 'ENTRY_REQUEST',
@@ -59,6 +60,22 @@ export class GateLog {
 
   @Column({ type: 'boolean', default: false })
   actionTaken: boolean;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  cameraId: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  vehicleType: string;
+
+  @ManyToOne(() => Image, { nullable: true })
+  @JoinColumn({ name: 'imageId' })
+  image: Image;
+
+  @Column({ nullable: true })
+  imageId: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  eventTime: Date;
 
   @ManyToOne(() => Vehicle, { nullable: true })
   @JoinColumn({ name: 'vehicleId' })

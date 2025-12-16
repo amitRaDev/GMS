@@ -36,11 +36,17 @@ export class GateService {
    * Main entry point for ANPR camera events
    * Handles the state machine logic for gate IN/OUT events
    */
-  async handleGateEvent(dto: GateEventDto): Promise<GateResponse> {
+  async handleGateEvent(dto: GateEventDto, cameraData?: {
+    cameraId?: string;
+    vehicleType?: string;
+    imageId?: string;
+    image?: string;
+    eventTime?: Date;
+  }): Promise<GateResponse> {
     const { vehicleNumber, direction, isTestDrive } = dto;
     const normalizedNumber = vehicleNumber.toUpperCase().replace(/\s/g, '');
 
-    this.logger.log(`Gate Event: ${normalizedNumber} - ${direction} ${isTestDrive ? '(Test Drive)' : ''}`);
+    this.logger.log(`Gate Event: ${normalizedNumber} - ${direction} ${isTestDrive ? '(Test Drive)' : ''} ${cameraData?.cameraId ? `[Camera: ${cameraData.cameraId}]` : ''}`);
 
     // Step 1: Find vehicle by number
     const vehicle = await this.findVehicleByNumber(normalizedNumber);
@@ -52,9 +58,9 @@ export class GateService {
 
     // Step 3: Route to appropriate handler based on direction
     if (direction === GateDirection.IN) {
-      return this.handleGateIn(normalizedNumber, vehicle, latestJob);
+      return this.handleGateIn(normalizedNumber, vehicle, latestJob, cameraData);
     } else {
-      return this.handleGateOut(normalizedNumber, vehicle, latestJob, isTestDrive);
+      return this.handleGateOut(normalizedNumber, vehicle, latestJob, isTestDrive, cameraData);
     }
   }
 
@@ -66,6 +72,7 @@ export class GateService {
     vehicleNumber: string,
     vehicle: Vehicle | null,
     latestJob: JobCard | null,
+    cameraData?: { cameraId?: string; vehicleType?: string; imageId?: string; image?: string; eventTime?: Date },
   ): Promise<GateResponse> {
     const hasActiveJob = latestJob && 
       (latestJob.status === JobStatus.IDLE || 
@@ -76,7 +83,7 @@ export class GateService {
       ? `Vehicle ${vehicleNumber} detected. Job Card: ${latestJob?.jobNumber} (${latestJob?.status})`
       : `Vehicle ${vehicleNumber} detected. No active job card found.`;
 
-    // Log entry request
+    // Log entry request with camera data
     await this.gateLogService.create({
       vehicleNumber,
       eventType: GateEventType.ENTRY_REQUEST,
@@ -86,9 +93,13 @@ export class GateService {
       hasJobCard: !!hasActiveJob,
       vehicleId: vehicle?.id,
       jobCardId: latestJob?.id,
+      cameraId: cameraData?.cameraId,
+      vehicleType: cameraData?.vehicleType,
+      imageId: cameraData?.imageId,
+      eventTime: cameraData?.eventTime,
     });
 
-    // Always emit entry request for popup
+    // Always emit entry request for popup with image
     this.gateway.emitEntryRequest({
       vehicleNumber,
       hasJobCard: !!hasActiveJob,
@@ -97,6 +108,9 @@ export class GateService {
       jobStatus: latestJob?.status,
       message,
       timestamp: new Date(),
+      image: cameraData?.image,
+      vehicleType: cameraData?.vehicleType,
+      cameraId: cameraData?.cameraId,
     });
 
     return {
@@ -120,6 +134,7 @@ export class GateService {
     vehicle: Vehicle | null,
     latestJob: JobCard | null,
     isTestDrive?: boolean,
+    cameraData?: { cameraId?: string; vehicleType?: string; imageId?: string; image?: string; eventTime?: Date },
   ): Promise<GateResponse> {
     // Check if exit is allowed
     const canExit = latestJob && 
@@ -148,7 +163,7 @@ export class GateService {
       ? `Vehicle ${vehicleNumber} requesting exit. ${exitReason}`
       : `Vehicle ${vehicleNumber} cannot exit. ${exitReason}`;
 
-    // Log exit request
+    // Log exit request with camera data
     await this.gateLogService.create({
       vehicleNumber,
       eventType: GateEventType.EXIT_REQUEST,
@@ -158,9 +173,13 @@ export class GateService {
       hasJobCard: !!latestJob,
       vehicleId: vehicle?.id,
       jobCardId: latestJob?.id,
+      cameraId: cameraData?.cameraId,
+      vehicleType: cameraData?.vehicleType,
+      imageId: cameraData?.imageId,
+      eventTime: cameraData?.eventTime,
     });
 
-    // Always emit exit request for popup
+    // Always emit exit request for popup with image
     this.gateway.emitExitRequest({
       vehicleNumber,
       canExit: !!canExit,
@@ -171,6 +190,9 @@ export class GateService {
       isTestDrive: !!isTestDrive,
       message,
       timestamp: new Date(),
+      image: cameraData?.image,
+      vehicleType: cameraData?.vehicleType,
+      cameraId: cameraData?.cameraId,
     });
 
     return {

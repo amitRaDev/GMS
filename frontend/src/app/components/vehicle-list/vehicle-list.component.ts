@@ -17,7 +17,9 @@ export class VehicleListComponent implements OnInit {
   searchTerm = '';
   showModal = false;
   showJobModal = false;
+  showDetailModal = false;
   selectedVehicle: Vehicle | null = null;
+  detailVehicle: Vehicle | null = null;
   jobDescription = '';
   formData: Partial<Vehicle> = {};
 
@@ -68,5 +70,15 @@ export class VehicleListComponent implements OnInit {
       this.closeModal();
       this.loadVehicles();
     });
+  }
+
+  openVehicleDetail(vehicle: Vehicle) {
+    this.detailVehicle = vehicle;
+    this.showDetailModal = true;
+  }
+
+  closeVehicleDetail() {
+    this.showDetailModal = false;
+    this.detailVehicle = null;
   }
 }
